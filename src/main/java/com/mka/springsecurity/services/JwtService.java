@@ -1,8 +1,10 @@
 package com.mka.springsecurity.services;
 
+import com.mka.springsecurity.configs.properties.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,8 +18,9 @@ import java.util.Map;
 @Component
 public class JwtService {
 
-    private String secret = "d;sfkbjhnfsdfb8dsfbdlkjn";  //секрет, который лучше всего держать где-то в другом месте
-    private Long expireTimeMillis = 1000L * 60 * 5;
+    @Autowired
+    private JwtProperties properties;
+
 
     public String generateJwtToken(UserDetails user) {
         String username = user.getUsername();
@@ -31,8 +34,8 @@ public class JwtService {
                 .setClaims(claims)
                 .setSubject(username)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + expireTimeMillis))
-                .signWith(SignatureAlgorithm.HS256, secret)
+                .setExpiration(new Date(System.currentTimeMillis() + properties.getExpireTime()))
+                .signWith(SignatureAlgorithm.HS256, properties.getSecret())
                 .compact();
     }
 
@@ -50,7 +53,7 @@ public class JwtService {
 
     private Claims parse(String value) {
         return Jwts.parser()
-                .setSigningKey(secret)
+                .setSigningKey(properties.getSecret())
                 .parseClaimsJws(value)
                 .getBody();
     }
