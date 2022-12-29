@@ -1,8 +1,10 @@
 package com.mka.springsecurity.services;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
@@ -32,5 +34,24 @@ public class JwtService {
                 .setExpiration(new Date(System.currentTimeMillis() + expireTimeMillis))
                 .signWith(SignatureAlgorithm.HS256, secret)
                 .compact();
+    }
+
+    public String getUsername(String bearerTokenValue) {
+        return parse(bearerTokenValue).getSubject();
+    }
+
+    public List<GrantedAuthority> getAuthorities(String bearerTokenValue) {
+        List<String> authority = (List<String>) parse(bearerTokenValue).get("authority");
+        return authority.stream()
+                .map(SimpleGrantedAuthority::new)
+                .map(it -> (GrantedAuthority) it)
+                .toList();
+    }
+
+    private Claims parse(String value) {
+        return Jwts.parser()
+                .setSigningKey(secret)
+                .parseClaimsJws(value)
+                .getBody();
     }
 }
